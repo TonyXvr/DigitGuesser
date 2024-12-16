@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --mode: dark;
+}
+
+/* Theme: cyberpunk */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 150 100% 50%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 150 100% 50%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 150 100% 50%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 150 100% 50%;
+    --radius: 0.3rem;
+  }
+  .dark {
+    --background: 220 100% 2%;
+    --foreground: 150 100% 50%;
+    --card: 220 100% 3%;
+    --card-foreground: 150 100% 50%;
+    --popover: 220 100% 2%;
+    --popover-foreground: 150 100% 50%;
+    --primary: 150 100% 50%;
+    --primary-foreground: 220 100% 2%;
+    --secondary: 220 100% 4%;
+    --secondary-foreground: 150 100% 50%;
+    --muted: 220 100% 4%;
+    --muted-foreground: 150 70% 50%;
+    --accent: 150 100% 50%;
+    --accent-foreground: 220 100% 2%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 150 100% 50%;
+    --input: 150 100% 50%;
+    --ring: 150 100% 50%;
+    --radius: 0.3rem;
+  }
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-image: 
+      linear-gradient(to bottom, transparent, rgba(0, 255, 128, 0.03)),
+      radial-gradient(circle at center, transparent, rgba(0, 255, 128, 0.05));
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 255, 128, 0.5),
+                 0 0 20px rgba(0, 255, 128, 0.3),
+                 0 0 30px rgba(0, 255, 128, 0.1);
+  }
+  
+  .neon-border {
+    box-shadow: 0 0 5px rgba(0, 255, 128, 0.5),
+                inset 0 0 5px rgba(0, 255, 128, 0.5);
+  }
+}
