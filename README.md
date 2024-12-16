@@ -41,3 +41,6 @@ To learn more about the technologies used in this template, check out the follow
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [React Context API](https://reactjs.org/docs/context.html)
+
+
+Updated to trigger redeployment.
