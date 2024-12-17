@@ -3,6 +3,7 @@ import '../styles/globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+import { ProfileProvider } from '@/contexts/ProfileContext';
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -121,9 +122,11 @@ export default function App({ Component, pageProps }: AppProps) {
   }
 
   return (
-    <div className="min-h-screen">
-      <Component {...pageProps} />
-      <Toaster />
-    </div>
+    <ProfileProvider>
+      <div className="min-h-screen">
+        <Component {...pageProps} />
+        <Toaster />
+      </div>
+    </ProfileProvider>
   )
 }

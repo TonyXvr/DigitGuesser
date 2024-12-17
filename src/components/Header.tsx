@@ -1,9 +1,11 @@
 import { useRouter } from 'next/router';
 import Logo from './Logo';
 import { Button } from './ui/button';
+import { useProfile } from '@/contexts/ProfileContext';
 
 const Header = () => {
   const router = useRouter();
+  const { user, signOut } = useProfile();
 
   return (
     <div className="w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -33,13 +35,24 @@ const Header = () => {
           >
             Records
           </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10"
-            onClick={() => router.push("/account")}
-          >
-            Account
-          </Button>
+          {user && (
+            <>
+              <Button
+                variant="ghost"
+                className="text-foreground hover:text-primary hover:bg-primary/10"
+                onClick={() => router.push("/account")}
+              >
+                Account
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-foreground hover:text-primary hover:bg-primary/10"
+                onClick={signOut}
+              >
+                Sign Out
+              </Button>
+            </>
+          )}
         </nav>
         <Button
           variant="outline"

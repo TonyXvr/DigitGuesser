@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Header from "@/components/Header";
+import Auth from "@/components/Auth";
+import { useProfile } from "@/contexts/ProfileContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -12,8 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { calculateScore } from "@/util/scoring";
 
 export default function Home() {
+  const { user, loading } = useProfile();
   const [targetNumber, setTargetNumber] = useState<string>("");
   const [currentGuess, setCurrentGuess] = useState<string>("");
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -22,7 +32,26 @@ export default function Home() {
   const [digitCount, setDigitCount] = useState<number>(0);
   const [gameStarted, setGameStarted] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<string>("");
+  const [score, setScore] = useState<number>(0);
   const { toast } = useToast();
+
+  // Add keyboard event listener
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (!gameStarted || gameOver) return;
+      
+      if (event.key >= "0" && event.key <= "9") {
+        handleNumberClick(event.key);
+      } else if (event.key === "Backspace") {
+        handleDelete();
+      } else if (event.key === "Enter") {
+        handleSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [gameStarted, gameOver, digitCount, currentGuess]);
 
   const getMaxAttempts = () => {
     switch (difficulty) {
@@ -65,6 +94,20 @@ export default function Home() {
     setCurrentGuess(prev => prev.slice(0, -1));
   };
 
+  const calculateCorrectDigits = (guess: string): number => {
+    let correct = 0;
+    const targetArray = targetNumber.split("");
+    const guessArray = guess.split("");
+    
+    for (let i = 0; i < guess.length; i++) {
+      if (guessArray[i] === targetArray[i]) {
+        correct++;
+      }
+    }
+    
+    return correct;
+  };
+
   const handleSubmit = () => {
     if (currentGuess.length !== digitCount) {
       toast({
@@ -77,16 +120,31 @@ export default function Home() {
     const newGuesses = [...guesses, currentGuess];
     setGuesses(newGuesses);
     
-    if (currentGuess === targetNumber) {
+    const correctDigits = calculateCorrectDigits(currentGuess);
+    const isComplete = currentGuess === targetNumber;
+    
+    // Calculate score for this guess
+    const newScore = calculateScore({
+      difficulty,
+      digitCount,
+      correctDigits,
+      isComplete,
+      attemptCount: newGuesses.length,
+      maxAttempts: getMaxAttempts(),
+    });
+    
+    setScore(newScore);
+    
+    if (isComplete) {
       setWon(true);
       setGameOver(true);
       toast({
-        description: "Congratulations! You won! 🎉",
+        description: `Congratulations! You won! 🎉 Score: ${newScore}`,
       });
     } else if (newGuesses.length >= getMaxAttempts()) {
       setGameOver(true);
       toast({
-        description: `Game Over! The number was ${targetNumber}`,
+        description: `Game Over! The number was ${targetNumber}. Final Score: ${newScore}`,
         variant: "destructive",
       });
     }
@@ -112,10 +170,18 @@ export default function Home() {
     return result;
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
-        <title>2oplite</title>
+        <title>DigitGuesser</title>
         <meta name="description" content="A number guessing game" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -123,6 +189,53 @@ export default function Home() {
       <div className="bg-background min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 flex flex-col items-center justify-start p-4 gap-4">
+          {/* How to Play and Scoring Parameters */}
+          <Card className="w-full max-w-md p-4 mb-4">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="how-to-play">
+                <AccordionTrigger>How to Play</AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2">
+                    <p>1. Choose your difficulty level and number of digits</p>
+                    <p>2. Try to guess the secret number within the given attempts</p>
+                    <p>3. After each guess, you'll get color-coded feedback:</p>
+                    <ul className="list-disc list-inside pl-4">
+                      <li className="text-green-500">Green: Correct digit in correct position</li>
+                      <li className="text-yellow-500">Yellow: Correct digit in wrong position</li>
+                      <li className="text-gray-500">Gray: Digit not in the number</li>
+                    </ul>
+                    <p>4. Use keyboard numbers or the on-screen keypad to input your guess</p>
+                    <p>5. Press Enter or ✓ to submit your guess</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="scoring">
+                <AccordionTrigger>Scoring Parameters</AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-2">
+                    <p className="font-semibold">Base Points:</p>
+                    <ul className="list-disc list-inside pl-4">
+                      <li>Correct digit placement: 10 points each</li>
+                      <li>Complete guess: 50 bonus points</li>
+                    </ul>
+                    <p className="font-semibold mt-4">Multipliers:</p>
+                    <ul className="list-disc list-inside pl-4">
+                      <li>Easy: 1x</li>
+                      <li>Medium: 1.5x</li>
+                      <li>Hard: 2x</li>
+                      <li>Crazy: 3x</li>
+                    </ul>
+                    <p className="font-semibold mt-4">Digit Count Bonus:</p>
+                    <ul className="list-disc list-inside pl-4">
+                      <li>Additional 0.5x per digit above 2</li>
+                    </ul>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </Card>
+          
+          {/* Game Component */}
           <Card className="w-full max-w-md p-4">
             {!gameStarted ? (
               <div className="flex flex-col gap-4">
@@ -165,9 +278,12 @@ export default function Home() {
             ) : (
               <>
                 {/* Game Info */}
-                <div className="text-center mb-4">
+                <div className="text-center mb-4 space-y-2">
                   <p className="text-sm opacity-70">
                     Guess the {digitCount}-digit number in {getMaxAttempts()} attempts
+                  </p>
+                  <p className="text-lg font-bold text-primary">
+                    Score: {score}
                   </p>
                 </div>
 
@@ -239,6 +355,17 @@ export default function Home() {
                 )}
               </>
             )}
+          </Card>
+
+          {/* Authentication Section */}
+          <Card className="w-full max-w-md p-4 mt-8">
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-bold">Want to save your scores?</h2>
+              <p className="text-sm text-muted-foreground mt-2">
+                Sign in to track your progress and compete on the leaderboard!
+              </p>
+            </div>
+            {!user && <Auth />}
           </Card>
         </main>
       </div>
