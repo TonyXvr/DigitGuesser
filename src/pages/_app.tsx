@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app'
 import '../styles/globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { ProfileProvider } from '@/contexts/ProfileContext';
