@@ -129,6 +129,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <Component {...pageProps} />
         <Toaster />
         <Analytics />
+        <SpeedInsights />
       </div>
     </ProfileProvider>
   )
