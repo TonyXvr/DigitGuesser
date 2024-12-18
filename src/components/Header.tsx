@@ -31,9 +31,9 @@ const Header = () => {
           <Button
             variant="ghost"
             className="text-foreground hover:text-primary hover:bg-primary/10"
-            onClick={() => router.push("/records")}
+            onClick={() => router.push("/multiplayer")}
           >
-            Records
+            Multiplayer
           </Button>
           {user && (
             <>
