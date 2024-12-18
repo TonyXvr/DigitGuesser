@@ -63,6 +63,7 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
         currentRound: 1,
         maxRounds: 10,
       });
+      return room;
     } catch (error) {
       console.error('Error creating room:', error);
       toast({

@@ -1,3 +1,4 @@
+import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -6,6 +7,7 @@ import { useMultiplayer } from "@/contexts/MultiplayerContext"
 import { useProfile } from "@/contexts/ProfileContext"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { MultiplayerGame } from "@/components/MultiplayerGame"
 
 export default function MultiplayerPage() {
   const [roomCode, setRoomCode] = useState("")
@@ -13,16 +15,25 @@ export default function MultiplayerPage() {
   const [maxPlayers, setMaxPlayers] = useState("4")
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [digits, setDigits] = useState("4")
-  const { createRoom, joinRoom, currentRoom } = useMultiplayer()
+  const { createRoom, joinRoom, currentRoom, leaveRoom } = useMultiplayer()
   const { user } = useProfile()
 
+  const router = useRouter();
+
   const handleCreateRoom = async () => {
-    await createRoom(
-      roomName || 'New Game Room',
-      parseInt(maxPlayers),
-      difficulty,
-      parseInt(digits)
-    )
+    try {
+      const room = await createRoom(
+        roomName || 'New Game Room',
+        parseInt(maxPlayers),
+        difficulty,
+        parseInt(digits)
+      );
+      if (room) {
+        router.push(`/room/${room.id}`);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+    }
   }
 
   const handleJoinRoom = async () => {
@@ -128,50 +139,64 @@ export default function MultiplayerPage() {
           </Card>
         </div>
       ) : (
-        <Card className="max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle>Room: {currentRoom.room.id}</CardTitle>
-            <CardDescription>
-              {currentRoom.players.length} players in room
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2">Players:</h3>
-                  <ul className="space-y-2">
-                    {currentRoom.players.map((player) => (
-                      <li key={player.id} className="flex items-center gap-2">
-                        <span className={player.id === currentRoom.room.host_id ? "text-primary" : ""}>
-                          {player.nickname} {player.id === currentRoom.room.host_id && "(Host)"}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">Game Settings:</h3>
-                  <p>Difficulty: {currentRoom.room.difficulty}</p>
-                  <p>Digits: {currentRoom.room.digits}</p>
-                  <p>Max Players: {currentRoom.room.max_players}</p>
-                  <p>Status: {currentRoom.room.status}</p>
-                </div>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div>
+                <CardTitle>Room: {currentRoom.room.id}</CardTitle>
+                <CardDescription>
+                  {currentRoom.players.length} players in room
+                </CardDescription>
               </div>
-              
-              {currentRoom.room.host_id === user?.id && currentRoom.room.status === 'waiting' && (
-                <Button 
-                  className="w-full"
-                  variant="default"
-                  disabled={currentRoom.players.length < 2}
-                  onClick={() => currentRoom.startGame()}
-                >
-                  Start Game
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+              <Button 
+                variant="outline"
+                onClick={leaveRoom}
+              >
+                Leave Room
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Players:</h3>
+                    <ul className="space-y-2">
+                      {currentRoom.players.map((player) => (
+                        <li key={player.id} className="flex items-center gap-2">
+                          <span className={player.id === currentRoom.room.host_id ? "text-primary" : ""}>
+                            {player.nickname} {player.id === currentRoom.room.host_id && "(Host)"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Game Settings:</h3>
+                    <p>Difficulty: {currentRoom.room.difficulty}</p>
+                    <p>Digits: {currentRoom.room.digits}</p>
+                    <p>Max Players: {currentRoom.room.max_players}</p>
+                    <p>Status: {currentRoom.room.status}</p>
+                  </div>
+                </div>
+                
+                {currentRoom.room.host_id === user?.id && currentRoom.room.status === 'waiting' && (
+                  <Button 
+                    className="w-full"
+                    variant="default"
+                    disabled={currentRoom.players.length < 2}
+                    onClick={() => currentRoom.startGame()}
+                  >
+                    Start Game
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {currentRoom.room.status === 'playing' && (
+            <MultiplayerGame />
+          )}
+        </div>
       )}
     </div>
   )
