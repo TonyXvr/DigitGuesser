@@ -20,6 +20,8 @@ export default function MultiplayerPage() {
   const { profile } = useProfile()
   const router = useRouter()
 
+  const { toast } = useToast()
+
   const handleCreateRoom = async () => {
     try {
       const room = await createRoom(
@@ -29,10 +31,20 @@ export default function MultiplayerPage() {
         parseInt(digits)
       )
       if (room) {
+        toast({
+          title: "Room Created Successfully!",
+          description: `Your room code is: ${room.id}`,
+          duration: 5000,
+        })
         router.push(`/room/${room.id}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating room:', error)
+      toast({
+        title: "Error Creating Room",
+        description: error.message || "Failed to create room",
+        variant: "destructive",
+      })
     }
   }
 

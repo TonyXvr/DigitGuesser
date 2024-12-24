@@ -53,25 +53,21 @@ export function MultiplayerProvider({ children }: { children: React.ReactNode })
     difficulty: 'easy' | 'medium' | 'hard',
     digits: number
   ) => {
-    if (!profile) return;
-    try {
-      const room = await createGameRoom(profile.id, name, maxPlayers, difficulty, digits);
-      const player = await joinGameRoom(room.id, profile.id, profile.nickname);
-      setCurrentRoom({
-        room,
-        players: [player],
-        currentRound: 1,
-        maxRounds: 10,
-      });
-      return room;
-    } catch (error) {
-      console.error('Error creating room:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create game room',
-        variant: 'destructive',
-      });
+    if (!profile) {
+      throw new Error('You must be signed in to create a room');
     }
+    
+    const room = await createGameRoom(profile.id, name, maxPlayers, difficulty, digits);
+    const player = await joinGameRoom(room.id, profile.id, profile.nickname);
+    
+    setCurrentRoom({
+      room,
+      players: [player],
+      currentRound: 1,
+      maxRounds: 10,
+    });
+    
+    return room;
   };
 
   const joinRoom = async (roomId: string) => {
