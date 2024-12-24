@@ -1,4 +1,3 @@
-import { useRouter } from "next/router"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,15 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import { MultiplayerGame } from "@/components/MultiplayerGame"
 
+import { useRouter } from 'next/router'
+
 export default function MultiplayerPage() {
   const [roomCode, setRoomCode] = useState("")
   const [roomName, setRoomName] = useState("")
   const [maxPlayers, setMaxPlayers] = useState("4")
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [digits, setDigits] = useState("4")
-  const { createRoom, joinRoom, currentRoom, leaveRoom } = useMultiplayer()
-  const { user } = useProfile()
-
+  const { createRoom, joinRoom, currentRoom, leaveRoom, startGame } = useMultiplayer()
+  const { profile } = useProfile()
   const router = useRouter();
 
   const handleCreateRoom = async () => {
@@ -179,12 +179,12 @@ export default function MultiplayerPage() {
                   </div>
                 </div>
                 
-                {currentRoom.room.host_id === user?.id && currentRoom.room.status === 'waiting' && (
+                {currentRoom.room.host_id === profile?.id && currentRoom.room.status === 'waiting' && (
                   <Button 
                     className="w-full"
                     variant="default"
                     disabled={currentRoom.players.length < 2}
-                    onClick={() => currentRoom.startGame()}
+                    onClick={startGame}
                   >
                     Start Game
                   </Button>

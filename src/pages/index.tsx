@@ -163,7 +163,7 @@ export default function Home() {
       } else if (targetArray.includes(guessArray[i])) {
         result.push("bg-yellow-500");
       } else {
-        result.push("bg-gray-500");
+        result.push("bg-red-500");
       }
     }
 
@@ -202,7 +202,7 @@ export default function Home() {
                     <ul className="list-disc list-inside pl-4">
                       <li className="text-green-500">Green: Correct digit in correct position</li>
                       <li className="text-yellow-500">Yellow: Correct digit in wrong position</li>
-                      <li className="text-gray-500">Gray: Digit not in the number</li>
+                      <li className="text-red-500">Red: Digit not in the number</li>
                     </ul>
                     <p>4. Use keyboard numbers or the on-screen keypad to input your guess</p>
                     <p>5. Press Enter or ✓ to submit your guess</p>

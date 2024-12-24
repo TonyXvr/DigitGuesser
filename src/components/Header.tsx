@@ -2,10 +2,59 @@ import { useRouter } from 'next/router';
 import Logo from './Logo';
 import { Button } from './ui/button';
 import { useProfile } from '@/contexts/ProfileContext';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Header = () => {
   const router = useRouter();
   const { user, signOut } = useProfile();
+
+  const NavigationItems = () => (
+    <>
+      <Button
+        variant="ghost"
+        className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
+        onClick={() => router.push("/")}
+      >
+        Home
+      </Button>
+      <Button
+        variant="ghost"
+        className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
+        onClick={() => router.push("/leaderboard")}
+      >
+        Leaderboard
+      </Button>
+      <Button
+        variant="ghost"
+        className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
+        onClick={() => router.push("/multiplayer")}
+      >
+        Multiplayer
+      </Button>
+      {user && (
+        <>
+          <Button
+            variant="ghost"
+            className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
+            onClick={() => router.push("/account")}
+          >
+            Account
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
+            onClick={signOut}
+          >
+            Sign Out
+          </Button>
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className="w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -14,53 +63,25 @@ const Header = () => {
           <Logo />
         </div>
         <nav className="hidden md:flex space-x-4">
-          <Button
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10"
-            onClick={() => router.push("/")}
-          >
-            Home
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10"
-            onClick={() => router.push("/leaderboard")}
-          >
-            Leaderboard
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10"
-            onClick={() => router.push("/multiplayer")}
-          >
-            Multiplayer
-          </Button>
-          {user && (
-            <>
-              <Button
-                variant="ghost"
-                className="text-foreground hover:text-primary hover:bg-primary/10"
-                onClick={() => router.push("/account")}
-              >
-                Account
-              </Button>
-              <Button
-                variant="ghost"
-                className="text-foreground hover:text-primary hover:bg-primary/10"
-                onClick={signOut}
-              >
-                Sign Out
-              </Button>
-            </>
-          )}
+          <NavigationItems />
         </nav>
-        <Button
-          variant="outline"
-          className="md:hidden"
-          size="icon"
-        >
-          <MenuIcon className="h-6 w-6" />
-        </Button>
+        
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button
+              variant="outline"
+              className="md:hidden"
+              size="icon"
+            >
+              <MenuIcon className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <div className="flex flex-col space-y-4 mt-6">
+              <NavigationItems />
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   );

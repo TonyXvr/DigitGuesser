@@ -44,7 +44,7 @@ export default function Auth() {
   }
 
   return (
-    <Card className="w-[400px] mx-auto mt-8">
+    <Card className="w-full max-w-[400px] mx-auto mt-8">
       <CardHeader>
         <CardTitle>Welcome to DigitGuesser</CardTitle>
         <CardDescription>Sign in to track your progress and compete on the leaderboard</CardDescription>

@@ -10,9 +10,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 export function MultiplayerGame() {
   const [guess, setGuess] = useState("");
   const { currentRoom, makeGuess } = useMultiplayer();
-  const { user } = useProfile();
+  const { profile } = useProfile();
 
-  if (!currentRoom || !user) return null;
+  if (!currentRoom || !profile) return null;
 
   const handleSubmitGuess = () => {
     if (guess.length === currentRoom.room.digits) {
@@ -34,6 +34,12 @@ export function MultiplayerGame() {
   const getPlayerFeedback = (playerId: string) => {
     const player = currentRoom.players.find(p => p.id === playerId);
     return player?.feedback || '';
+  };
+
+  const getFeedbackBadgeVariant = (feedback: string) => {
+    if (feedback.includes('Correct')) return 'success';
+    if (feedback.includes('Not in number')) return 'destructive';
+    return 'outline';
   };
 
   return (
@@ -64,7 +70,9 @@ export function MultiplayerGame() {
                     {getPlayerLastGuess(player.id) && (
                       <>
                         <span>Last Guess: {getPlayerLastGuess(player.id)}</span>
-                        <Badge variant="outline">{getPlayerFeedback(player.id)}</Badge>
+                        <Badge variant={getFeedbackBadgeVariant(getPlayerFeedback(player.id))}>
+                          {getPlayerFeedback(player.id)}
+                        </Badge>
                       </>
                     )}
                     <Badge 
