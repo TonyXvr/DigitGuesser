@@ -1,10 +1,4 @@
-# Codev Template
-
-This is a Codev template project that includes:
-
-1. Next.js with Pages Router
-2. Tailwind CSS Framework
-3. Context for global state management
+Website link:https://www.digitguesser.com/
 
 ## Features
 
