@@ -1,7 +1,6 @@
 import { useRouter } from 'next/router';
 import Logo from './Logo';
 import { Button } from './ui/button';
-import { useProfile } from '@/contexts/ProfileContext';
 import {
   Sheet,
   SheetContent,
@@ -10,54 +9,43 @@ import {
 
 const Header = () => {
   const router = useRouter();
-  const { user, signOut } = useProfile();
+
+  const isActive = (path: string) => router.pathname === path;
 
   const NavigationItems = () => (
     <>
       <Button
-        variant="ghost"
-        className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
-        onClick={() => router.push("/")}
+        variant={isActive("/single-player") ? "secondary" : "ghost"}
+        className={`text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start ${
+          isActive("/single-player") ? "bg-secondary" : ""
+        }`}
+        onClick={() => router.push("/single-player")}
       >
-        Home
+        Singleplayer
       </Button>
       <Button
-        variant="ghost"
-        className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
-        onClick={() => router.push("/leaderboard")}
-      >
-        Leaderboard
-      </Button>
-      <Button
-        variant="ghost"
-        className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
+        variant={isActive("/multiplayer") ? "secondary" : "ghost"}
+        className={`text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start ${
+          isActive("/multiplayer") ? "bg-secondary" : ""
+        }`}
         onClick={() => router.push("/multiplayer")}
       >
         Multiplayer
       </Button>
-      {user && (
-        <>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
-            onClick={() => router.push("/account")}
-          >
-            Account
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start"
-            onClick={signOut}
-          >
-            Sign Out
-          </Button>
-        </>
-      )}
+      <Button
+        variant={isActive("/leaderboard") ? "secondary" : "ghost"}
+        className={`text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start ${
+          isActive("/leaderboard") ? "bg-secondary" : ""
+        }`}
+        onClick={() => router.push("/leaderboard")}
+      >
+        Leaderboard
+      </Button>
     </>
   );
 
   return (
-    <div className="w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="cursor-pointer" onClick={() => router.push("/")}>
           <Logo />

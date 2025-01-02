@@ -2,66 +2,55 @@ import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { createProfile } from '@/lib/supabase'
 import { useProfile } from '@/contexts/ProfileContext'
-import { useToast } from '@/components/ui/use-toast'
 
-export function NicknameDialog() {
-  const [nickname, setNickname] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { user, profile, setProfile } = useProfile()
-  const { toast } = useToast()
+interface NicknameDialogProps {
+  isOpen: boolean
+  onSubmit: (nickname: string) => void
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!nickname.trim() || !user) return
+export function NicknameDialog({ isOpen, onSubmit }: NicknameDialogProps) {
+  const [inputNickname, setInputNickname] = useState('')
+  const { setNickname } = useProfile()
 
-    setIsLoading(true)
-    try {
-      const newProfile = await createProfile(user.id, nickname.trim())
-      setProfile(newProfile)
-      toast({
-        title: 'Welcome!',
-        description: `Your nickname "${nickname}" has been set.`,
-      })
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to set nickname. Please try again.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
+  const handleSubmit = () => {
+    if (inputNickname.trim()) {
+      setNickname(inputNickname.trim())
+      onSubmit(inputNickname.trim())
+      setInputNickname('')
     }
   }
 
-  // Show dialog only if user is authenticated but doesn't have a profile yet
-  const showDialog = user && !profile
-
   return (
-    <Dialog open={showDialog} modal>
+    <Dialog open={isOpen} modal>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Choose Your Nickname</DialogTitle>
           <DialogDescription>
-            Enter a unique nickname to start playing and compete on the leaderboard.
+            Enter a nickname to identify yourself in the game room
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <Input
             placeholder="Enter your nickname"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            disabled={isLoading}
+            value={inputNickname}
+            onChange={(e) => setInputNickname(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleSubmit()
+              }
+            }}
             minLength={3}
             maxLength={20}
-            pattern="[A-Za-z0-9_-]+"
-            title="Nickname can only contain letters, numbers, underscores, and hyphens"
           />
-          <Button type="submit" disabled={!nickname.trim() || isLoading} className="w-full">
-            {isLoading ? 'Setting up...' : 'Start Playing'}
+          <Button 
+            onClick={handleSubmit} 
+            disabled={!inputNickname.trim()} 
+            className="w-full"
+          >
+            Join Room
           </Button>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   )

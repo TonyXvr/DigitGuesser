@@ -1,29 +1,94 @@
 import { useRouter } from 'next/router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MultiplayerGame } from '@/components/MultiplayerGame';
 import { useMultiplayer } from '@/contexts/MultiplayerContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useProfile } from '@/contexts/ProfileContext';
+import { NicknameDialog } from '@/components/NicknameDialog';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function RoomPage() {
   const router = useRouter();
   const { id } = router.query;
   const { currentRoom, joinRoom, leaveRoom } = useMultiplayer();
-  const { user } = useProfile();
+  const { nickname } = useProfile();
+  const [isLoading, setIsLoading] = useState(true);
+  const [showNicknameDialog, setShowNicknameDialog] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    if (id && typeof id === 'string' && !currentRoom) {
-      joinRoom(id);
+    let timeoutId: NodeJS.Timeout;
+
+    const initializeRoom = async () => {
+      if (!id || typeof id !== 'string') return;
+      
+      if (!nickname) {
+        setShowNicknameDialog(true);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        await joinRoom(id);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to join the room. Please try again.",
+          variant: "destructive",
+        });
+        router.push('/multiplayer');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Set a timeout for the loading state
+    timeoutId = setTimeout(() => {
+      if (isLoading) {
+        toast({
+          title: "Connection timeout",
+          description: "Failed to connect to the room. Please try again.",
+          variant: "destructive",
+        });
+        router.push('/multiplayer');
+      }
+    }, 15000); // 15 seconds timeout
+
+    initializeRoom();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [id, nickname, joinRoom]);
+
+  const handleNicknameSubmit = async (nickname: string) => {
+    setShowNicknameDialog(false);
+    if (id && typeof id === 'string') {
+      try {
+        await joinRoom(id);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to join the room. Please try again.",
+          variant: "destructive",
+        });
+        router.push('/multiplayer');
+      }
     }
-  }, [id, joinRoom, currentRoom]);
+  };
 
   const handleLeaveRoom = async () => {
     await leaveRoom();
     router.push('/multiplayer');
   };
 
-  if (!currentRoom || !user) {
+  if (showNicknameDialog) {
+    return <NicknameDialog isOpen={true} onSubmit={handleNicknameSubmit} />;
+  }
+
+  if (isLoading) {
     return (
       <div className="container mx-auto py-8">
         <Card>
@@ -31,6 +96,24 @@ export default function RoomPage() {
             <CardTitle>Loading...</CardTitle>
             <CardDescription>Please wait while we connect you to the game room</CardDescription>
           </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!currentRoom) {
+    return (
+      <div className="container mx-auto py-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Room not found</CardTitle>
+            <CardDescription>This room might no longer exist</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.push('/multiplayer')}>
+              Back to Rooms
+            </Button>
+          </CardContent>
         </Card>
       </div>
     );
@@ -77,7 +160,7 @@ export default function RoomPage() {
               </div>
             </div>
             
-            {currentRoom.room.host_id === user.id && currentRoom.room.status === 'waiting' && (
+            {currentRoom.room.host_id === nickname && currentRoom.room.status === 'waiting' && (
               <Button 
                 className="w-full"
                 variant="default"

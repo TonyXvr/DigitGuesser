@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { MultiplayerGame } from "@/components/MultiplayerGame"
 import { useRouter } from 'next/router'
 import Header from "@/components/Header"
+import { NicknameDialog } from "@/components/NicknameDialog"
 
 export default function MultiplayerPage() {
   const [roomCode, setRoomCode] = useState("")
@@ -17,13 +18,24 @@ export default function MultiplayerPage() {
   const [maxPlayers, setMaxPlayers] = useState("4")
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [digits, setDigits] = useState("4")
-  const { createRoom, joinRoom, currentRoom, leaveRoom, startGame } = useMultiplayer()
-  const { profile } = useProfile()
+  const [showNicknameDialog, setShowNicknameDialog] = useState(false)
+  const [pendingRoomAction, setPendingRoomAction] = useState<{
+    type: 'create' | 'join'
+    data?: any
+  } | null>(null)
+  
+  const { createRoom, joinRoom, currentRoom, leaveRoom, startGame, availableRooms } = useMultiplayer()
+  const { nickname } = useProfile()
   const router = useRouter()
-
   const { toast } = useToast()
 
   const handleCreateRoom = async () => {
+    if (!nickname) {
+      setPendingRoomAction({ type: 'create' })
+      setShowNicknameDialog(true)
+      return
+    }
+
     try {
       const room = await createRoom(
         roomName || 'New Game Room',
@@ -50,108 +62,177 @@ export default function MultiplayerPage() {
   }
 
   const handleJoinRoom = async () => {
-    if (roomCode) {
-      await joinRoom(roomCode)
+    if (!nickname) {
+      setPendingRoomAction({ type: 'join', data: roomCode })
+      setShowNicknameDialog(true)
+      return
     }
+
+    if (roomCode) {
+      try {
+        await joinRoom(roomCode)
+        router.push(`/room/${roomCode}`)
+      } catch (error: any) {
+        toast({
+          title: "Error Joining Room",
+          description: error.message || "Failed to join room",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
+  const handleNicknameSubmit = async (nickname: string) => {
+    setShowNicknameDialog(false)
+    
+    if (pendingRoomAction?.type === 'create') {
+      handleCreateRoom()
+    } else if (pendingRoomAction?.type === 'join') {
+      handleJoinRoom()
+    }
+    
+    setPendingRoomAction(null)
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+
       <div className="container mx-auto py-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-primary">Multiplayer Mode</h1>
         
         {!currentRoom ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="space-y-8 max-w-4xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle>Create Room</CardTitle>
-                <CardDescription>Start a new game room and invite friends</CardDescription>
+                <CardTitle>Available Rooms</CardTitle>
+                <CardDescription>Join an existing game room or create your own</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="roomName">Room Name</Label>
+              <CardContent>
+                <div className="space-y-4">
+                  {availableRooms.length > 0 ? (
+                    <div className="grid gap-4">
+                      {availableRooms.map((room) => (
+                        <div key={room.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                          <div className="space-y-1">
+                            <p className="font-medium">{room.name || 'Game Room'}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Players: {room.players?.length || 0}/{room.max_players} • 
+                              Difficulty: {room.difficulty} • 
+                              Digits: {room.digits}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              setRoomCode(room.id);
+                              handleJoinRoom();
+                            }}
+                            variant="default"
+                          >
+                            Join Room
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No rooms available. Create one below!
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Create Room</CardTitle>
+                  <CardDescription>Start a new game room and invite friends</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="roomName">Room Name</Label>
+                    <Input
+                      id="roomName"
+                      placeholder="Enter room name"
+                      value={roomName}
+                      onChange={(e) => setRoomName(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="maxPlayers">Max Players</Label>
+                    <Select value={maxPlayers} onValueChange={setMaxPlayers}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select max players" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2 Players</SelectItem>
+                        <SelectItem value="3">3 Players</SelectItem>
+                        <SelectItem value="4">4 Players</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="difficulty">Difficulty</Label>
+                    <Select value={difficulty} onValueChange={(value: 'easy' | 'medium' | 'hard') => setDifficulty(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select difficulty" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="digits">Number of Digits</Label>
+                    <Select value={digits} onValueChange={setDigits}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select number of digits" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="3">3 Digits</SelectItem>
+                        <SelectItem value="4">4 Digits</SelectItem>
+                        <SelectItem value="5">5 Digits</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button 
+                    onClick={handleCreateRoom}
+                    className="w-full"
+                    variant="default"
+                  >
+                    Create New Room
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Join Room</CardTitle>
+                  <CardDescription>Enter a room code to join an existing game</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
                   <Input
-                    id="roomName"
-                    placeholder="Enter room name"
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
+                    placeholder="Enter room code"
+                    value={roomCode}
+                    onChange={(e) => setRoomCode(e.target.value)}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="maxPlayers">Max Players</Label>
-                  <Select value={maxPlayers} onValueChange={setMaxPlayers}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select max players" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2">2 Players</SelectItem>
-                      <SelectItem value="3">3 Players</SelectItem>
-                      <SelectItem value="4">4 Players</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="difficulty">Difficulty</Label>
-                  <Select value={difficulty} onValueChange={(value: 'easy' | 'medium' | 'hard') => setDifficulty(value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select difficulty" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="digits">Number of Digits</Label>
-                  <Select value={digits} onValueChange={setDigits}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select number of digits" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="3">3 Digits</SelectItem>
-                      <SelectItem value="4">4 Digits</SelectItem>
-                      <SelectItem value="5">5 Digits</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button 
-                  onClick={handleCreateRoom}
-                  className="w-full"
-                  variant="default"
-                >
-                  Create New Room
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Join Room</CardTitle>
-                <CardDescription>Enter a room code to join an existing game</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Input
-                  placeholder="Enter room code"
-                  value={roomCode}
-                  onChange={(e) => setRoomCode(e.target.value)}
-                />
-                <Button 
-                  onClick={handleJoinRoom}
-                  className="w-full"
-                  variant="default"
-                  disabled={!roomCode}
-                >
-                  Join Room
-                </Button>
-              </CardContent>
-            </Card>
+                  <Button 
+                    onClick={handleJoinRoom}
+                    className="w-full"
+                    variant="default"
+                    disabled={!roomCode}
+                  >
+                    Join Room
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         ) : (
           <div className="max-w-4xl mx-auto space-y-6">
@@ -194,7 +275,7 @@ export default function MultiplayerPage() {
                     </div>
                   </div>
                   
-                  {currentRoom.room.host_id === profile?.id && currentRoom.room.status === 'waiting' && (
+                  {currentRoom.room.host_id === nickname && currentRoom.room.status === 'waiting' && (
                     <Button 
                       className="w-full"
                       variant="default"
@@ -214,6 +295,11 @@ export default function MultiplayerPage() {
           </div>
         )}
       </div>
+
+      <NicknameDialog 
+        isOpen={showNicknameDialog} 
+        onSubmit={handleNicknameSubmit}
+      />
     </div>
   )
 }

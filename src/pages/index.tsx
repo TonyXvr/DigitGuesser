@@ -21,6 +21,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { calculateScore } from "@/util/scoring";
+import { NumberPad } from "@/components/NumberPad";
 
 export default function Home() {
   const { user, loading } = useProfile();
@@ -187,7 +188,6 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="bg-background min-h-screen flex flex-col">
-        <Header />
         <main className="flex-1 flex flex-col items-center justify-start p-4 gap-4">
           {/* How to Play and Scoring Parameters */}
           <Card className="w-full max-w-md p-4 mb-4">
@@ -323,22 +323,18 @@ export default function Home() {
                 )}
 
                 {/* Number Pad */}
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "✓"].map((num) => (
-                    <Button
-                      key={num}
-                      onClick={() => {
-                        if (num === "⌫") handleDelete();
-                        else if (num === "✓") handleSubmit();
-                        else handleNumberClick(num.toString());
-                      }}
-                      className="h-12 text-lg font-bold"
-                      variant={typeof num === "number" ? "outline" : "default"}
-                    >
-                      {num}
-                    </Button>
-                  ))}
-                </div>
+                {!gameOver && (
+                  <NumberPad
+                    onNumberClick={handleNumberClick}
+                    onDelete={handleDelete}
+                    onSubmit={handleSubmit}
+                    currentGuess={currentGuess}
+                    maxLength={digitCount}
+                    feedback={won ? "Correct!" : gameOver ? "Game Over" : ""}
+                    attempts={guesses.length}
+                    maxAttempts={getMaxAttempts()}
+                  />
+                )}
 
                 {/* Game Over State */}
                 {gameOver && (
@@ -355,6 +351,19 @@ export default function Home() {
                 )}
               </>
             )}
+          </Card>
+
+          {/* Try More Modes Button */}
+          <Card className="w-full max-w-md p-4 mt-4">
+            <div className="text-center">
+              <h2 className="text-xl font-bold mb-4">Want to try more game modes?</h2>
+              <Button 
+                className="w-full"
+                onClick={() => window.location.href = '/single-player'}
+              >
+                Try More Modes! 🎮
+              </Button>
+            </div>
           </Card>
 
           {/* Authentication Section */}
