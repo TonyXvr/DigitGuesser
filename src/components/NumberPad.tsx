@@ -23,8 +23,6 @@ export function NumberPad({
   attempts,
   maxAttempts
 }: NumberPadProps) {
-  const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-
   const getFeedbackColor = () => {
     if (feedback.includes('Correct!')) return 'success';
     if (feedback.includes('Game Over')) return 'destructive';
@@ -49,32 +47,25 @@ export function NumberPad({
       )}
 
       <div className="grid grid-cols-3 gap-2">
-        {numbers.map((num) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "✓"].map((num) => (
           <Button
             key={num}
-            variant="outline"
-            className="h-12 text-lg font-mono"
-            onClick={() => onNumberClick(num)}
-            disabled={currentGuess.length >= maxLength}
+            onClick={() => {
+              if (num === "⌫") onDelete();
+              else if (num === "✓") onSubmit();
+              else onNumberClick(num.toString());
+            }}
+            className="h-12 text-lg font-bold"
+            variant={typeof num === "number" ? "outline" : "default"}
+            disabled={
+              (typeof num === "number" && currentGuess.length >= maxLength) ||
+              (num === "⌫" && currentGuess.length === 0) ||
+              (num === "✓" && currentGuess.length !== maxLength)
+            }
           >
             {num}
           </Button>
         ))}
-        <Button
-          variant="outline"
-          className="h-12 text-lg font-mono"
-          onClick={onDelete}
-          disabled={currentGuess.length === 0}
-        >
-          ←
-        </Button>
-        <Button
-          className="h-12 text-lg font-mono col-span-2"
-          onClick={onSubmit}
-          disabled={currentGuess.length !== maxLength}
-        >
-          Submit
-        </Button>
       </div>
     </div>
   );
