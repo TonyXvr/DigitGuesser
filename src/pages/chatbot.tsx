@@ -15,7 +15,7 @@ type ChatMessage = {
 }
 
 export default function ChatbotPage() {
-  const [messages, setMessages] = useState<Array<ChatMessage>>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -24,27 +24,44 @@ export default function ChatbotPage() {
     if (!input.trim()) return
     
     setIsLoading(true)
+    const newMessage: ChatMessage = { role: 'user', content: input }
+    
     try {
-      // Add your API integration here
-      const newMessage = { role: 'user', content: input }
+      // Update messages optimistically
       setMessages(prev => [...prev, newMessage])
-      
-      // Simulated AI response
-      setTimeout(() => {
-        setMessages(prev => [
-          ...prev,
-          { 
-            role: 'assistant', 
-            content: "This is a simulated response. Integrate with your AI API here.",
-            reasoning: "This is a simulated reasoning. Integrate with your AI API here."
-          }
-        ])
-        setIsLoading(false)
-      }, 1000)
-      
       setInput('')
+
+      const response = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...messages, newMessage] })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const { content, reasoning } = await response.json()
+      
+      setMessages(prev => [
+        ...prev,
+        { 
+          role: 'assistant', 
+          content: content || "I couldn't generate a response.",
+          reasoning: reasoning || "Response generation failed"
+        }
+      ])
     } catch (error) {
       console.error('Chat error:', error)
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: "Sorry, I'm having trouble responding. Please try again.",
+          reasoning: "Error occurred during API request"
+        }
+      ])
+    } finally {
       setIsLoading(false)
     }
   }
@@ -67,7 +84,7 @@ export default function ChatbotPage() {
                   <div key={index}>
                     {msg.reasoning && (
                       <div className="p-3 mb-2 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-                        {msg.reasoning}
+        <span className="font-medium">Reasoning:</span> {msg.reasoning}
                       </div>
                     )}
                     <div className={`p-3 rounded-lg max-w-[80%] ${
@@ -81,7 +98,7 @@ export default function ChatbotPage() {
                 ))}
                 {isLoading && (
                   <div className="p-3 rounded-lg bg-muted max-w-[80%] animate-pulse">
-                    ...
+                    Thinking...
                   </div>
                 )}
               </div>
@@ -92,13 +109,14 @@ export default function ChatbotPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask me about number patterns..."
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === 'Enter' && !isLoading && handleSend()}
+                disabled={isLoading}
               />
               <Button 
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
               >
-                Send
+                {isLoading ? 'Sending...' : 'Send'}
               </Button>
             </div>
           </CardContent>
