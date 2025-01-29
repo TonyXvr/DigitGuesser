@@ -14,6 +14,13 @@ export default async function handler(
   }
 
   try {
+    console.log('API Key exists:', !!process.env.DEEPSEEK_API_KEY);
+
+    if (!process.env.DEEPSEEK_API_KEY) {
+      console.error('DeepSeek API key is missing')
+      throw new Error('API key not configured')
+    }
+
     const { messages } = req.body as { messages: Message[] }
     
     console.log('Sending to DeepSeek API:', JSON.stringify({
@@ -30,9 +37,8 @@ export default async function handler(
       },
       body: JSON.stringify({
         model: "deepseek-reasoner",
-        messages,
-        temperature: 0.3,
-        max_tokens: 2000,
+        messages: [{ role: "system", content: "Auth test" }],
+        temperature: 0
       })
     })
 
