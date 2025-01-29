@@ -41,6 +41,15 @@ const Header = () => {
       >
         Leaderboard
       </Button>
+      <Button
+        variant={isActive("/chatbot") ? "secondary" : "ghost"}
+        className={`text-foreground hover:text-primary hover:bg-primary/10 w-full justify-start ${
+          isActive("/chatbot") ? "bg-secondary" : ""
+        }`}
+        onClick={() => router.push("/chatbot")}
+      >
+        AI Assistant
+      </Button>
     </>
   );
 
