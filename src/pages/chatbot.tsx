@@ -7,8 +7,15 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { MessageCircle } from 'lucide-react'
 
+// Update message type
+type ChatMessage = {
+  role: 'user' | 'assistant'
+  content: string
+  reasoning?: string
+}
+
 export default function ChatbotPage() {
-  const [messages, setMessages] = useState<Array<{ role: string, content: string }>>([])
+  const [messages, setMessages] = useState<Array<ChatMessage>>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -24,10 +31,14 @@ export default function ChatbotPage() {
       
       // Simulated AI response
       setTimeout(() => {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: "This is a simulated response. Integrate with your AI API here."
-        }])
+        setMessages(prev => [
+          ...prev,
+          { 
+            role: 'assistant', 
+            content: "This is a simulated response. Integrate with your AI API here.",
+            reasoning: "This is a simulated reasoning. Integrate with your AI API here."
+          }
+        ])
         setIsLoading(false)
       }, 1000)
       
@@ -53,15 +64,19 @@ export default function ChatbotPage() {
             <ScrollArea className="h-96 rounded-md border p-4 mb-4">
               <div className="space-y-4">
                 {messages.map((msg, index) => (
-                  <div 
-                    key={index}
-                    className={`p-3 rounded-lg max-w-[80%] ${
+                  <div key={index}>
+                    {msg.reasoning && (
+                      <div className="p-3 mb-2 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+                        {msg.reasoning}
+                      </div>
+                    )}
+                    <div className={`p-3 rounded-lg max-w-[80%] ${
                       msg.role === 'user' 
                         ? 'ml-auto bg-primary text-primary-foreground' 
                         : 'bg-muted'
-                    }`}
-                  >
-                    {msg.content}
+                    }`}>
+                      {msg.content}
+                    </div>
                   </div>
                 ))}
                 {isLoading && (
