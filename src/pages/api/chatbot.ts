@@ -16,6 +16,12 @@ export default async function handler(
   try {
     const { messages } = req.body as { messages: Message[] }
     
+    console.log('Sending to DeepSeek API:', JSON.stringify({
+      model: "deepseek-reasoner",
+      messages: messages.slice(-3), // Last 3 messages for context
+      temperature: 0.3
+    }, null, 2))
+
     const deepseekResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -27,17 +33,16 @@ export default async function handler(
         messages,
         temperature: 0.3,
         max_tokens: 2000,
-        top_p: 0.95,
-        frequency_penalty: 0.2,
-        presence_penalty: 0.2,
-        stop: ["\n\n"],
-        reasoning_depth: "advanced"
       })
     })
 
     if (!deepseekResponse.ok) {
       throw new Error(`DeepSeek API error: ${deepseekResponse.statusText}`)
     }
+
+    console.log('DeepSeek response status:', deepseekResponse.status)
+    const responseBody = await deepseekResponse.text()
+    console.log('DeepSeek response body:', responseBody)
 
     const data = await deepseekResponse.json()
     const responseData = {
